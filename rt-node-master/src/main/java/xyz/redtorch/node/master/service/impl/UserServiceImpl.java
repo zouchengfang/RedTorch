@@ -2,6 +2,7 @@ package xyz.redtorch.node.master.service.impl;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -45,6 +46,8 @@ public class UserServiceImpl implements UserService {
 	 */
 	private volatile int nodeId = 60000000;
 
+	private ReentrantLock nodeIdLock = new ReentrantLock();
+	
 	@Override
 	public UserPo userAuth(UserPo user) {
 
@@ -69,9 +72,14 @@ public class UserServiceImpl implements UserService {
 			if (adminPasswordSha256.equals(passwoedSha256hex)) {
 				UserPo resUser = new UserPo();
 				resUser.setUsername("admin");
-				do {
-					nodeId++;
-				} while (webSocketServerHandler.containsNodeId(nodeId));
+				nodeIdLock.lock();
+				try {
+					do {
+						nodeId++;
+					} while (webSocketServerHandler.containsNodeId(nodeId));
+				} finally {
+					nodeIdLock.unlock();
+				}
 				logger.error("用户审核通过,用户名:{},分配节点ID:{}", user.getUsername(), nodeId);
 				resUser.setRecentlyNodeId(nodeId);
 				resUser.setOperatorId(operatorId);
@@ -100,9 +108,14 @@ public class UserServiceImpl implements UserService {
 				return null;
 			} else {
 				if (queriedUser.getPassword().equals(passwoedSha256hex)) {
-					do {
-						nodeId++;
-					} while (webSocketServerHandler.containsNodeId(nodeId));
+					nodeIdLock.lock();
+					try {
+						do {
+							nodeId++;
+						} while (webSocketServerHandler.containsNodeId(nodeId));
+					} finally {
+						nodeIdLock.unlock();
+					}
 					queriedUser.setRecentlyIpAddress(user.getRecentlyIpAddress());
 					queriedUser.setRecentlyPort(user.getRecentlyPort());
 					queriedUser.setRecentlySessionId(user.getRecentlySessionId());
