@@ -1,6 +1,6 @@
 group = 'xyz.redtorch'
 version = '0.2.0'
-description = """Java开源量化交易开发框架 http://redtorch.io/"""
+description = """Java开源量化交易开发框架 测试一下"""
 
 ext {
         springBootVersion = '2.1.5.RELEASE'
